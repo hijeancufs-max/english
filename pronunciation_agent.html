@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 발음 코치</title>
+<script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
+<style>
+  :root{--bg:#0f1115;--panel:#181b22;--panel2:#20242e;--ink:#ece7da;--muted:#888f9c;--accent:#ffb454;--accent2:#5ee0c0;--bad:#ff6b6b;--warn:#ffd166;--good:#5ee0c0;--line:#2b313c}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:sans-serif;min-height:100vh;padding:30px 16px 60px;display:flex;justify-content:center}
+  .wrap{width:100%;max-width:680px}
+  .kicker{font-family:monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--accent)}
+  h1{font-weight:900;font-size:clamp(30px,7vw,46px);line-height:1.05;margin:6px 0 4px}
+  h1 em{font-style:italic;color:var(--accent2);font-weight:500}
+  .sub{color:var(--muted);font-size:14px}
+  .today{font-family:monospace;font-size:12px;color:var(--accent2);margin-top:4px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:18px}
+  .label{font-family:monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .target{font-size:clamp(20px,4.5vw,28px);line-height:1.4;font-weight:600}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  button{font-family:sans-serif;font-weight:700;font-size:15px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);padding:13px 18px;border-radius:12px;cursor:pointer;transition:.15s}
+  button:hover{border-color:var(--accent)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .btn-rec{background:var(--accent);color:#1a1205;border-color:var(--accent)}
+  .btn-rec.live{background:var(--bad);border-color:var(--bad);color:#fff}
+  input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:14px;font-family:monospace}
+  .setup{margin-top:14px;border:1px dashed var(--line);border-radius:12px;padding:14px}
+  .setup summary{cursor:pointer;font-weight:700;color:var(--accent2)}
+  .field{margin-top:10px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .result{margin-top:18px;display:none}
+  .result.show{display:block}
+  .ring-row{display:flex;align-items:center;gap:18px;margin-bottom:14px;flex-wrap:wrap}
+  .ring{width:96px;height:96px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:30px;background:conic-gradient(var(--accent2) var(--deg,0deg),var(--line) 0)}
+  .ring span{width:78px;height:78px;border-radius:50%;background:var(--panel);display:flex;align-items:center;justify-content:center}
+  .subscores{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;flex:1;min-width:220px}
+  .ss{font-size:13px}
+  .ss b{font-family:monospace;float:right}
+  .bar{height:6px;background:var(--line);border-radius:4px;margin-top:4px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent2)}
+  .words{font-size:22px;line-height:1.7;margin-top:16px}
+  .words .w{padding:1px 4px;border-radius:5px;position:relative}
+  .words .w.good{color:var(--good)}.words .w.mid{color:var(--warn)}.words .w.low{color:var(--bad);text-decoration:underline wavy var(--bad)}
+  .words .w[data-ph]:hover::after{content:attr(data-ph);position:absolute;left:0;bottom:130%;background:#000;color:#fff;font-family:monospace;font-size:11px;padding:5px 8px;border-radius:6px;white-space:nowrap;z-index:5;border:1px solid var(--line)}
+  .feedback{margin-top:14px;padding:14px 16px;border-left:3px solid var(--accent);background:rgba(255,180,84,.06);border-radius:0 10px 10px 0;font-size:14px;line-height:1.65}
+  .nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px}
+  .nav .count{font-family:monospace;font-size:13px;color:var(--muted)}
+  .status{margin-top:12px;font-size:13px;color:var(--muted);min-height:20px}
+  .warn{margin-top:16px;font-size:12.5px;color:var(--muted);line-height:1.6;border:1px dashed var(--line);border-radius:10px;padding:12px 14px}
+  .warn b{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Daily News · Pronunciation Agent</div>
+    <h1>오늘의 발음 <em>코치</em></h1>
+    <div class="sub">문장 듣기 → 따라 말하기 → Azure 음소 평가 + 한국어 피드백</div>
+    <div class="today" id="todayLabel"></div>
+  </header>
+
+  <details class="setup">
+    <summary>⚙️ 처음 한 번만: Azure 키 입력</summary>
+    <div class="field"><label>Azure Speech 키 (KEY 1)</label><input type="password" id="azKey" placeholder="여기에 붙여넣기"></div>
+    <div class="field"><label>지역 (Region)</label><input type="text" id="azRegion" value="koreacentral"></div>
+    <div class="field"><button id="saveKey">키 저장</button><span id="keyState" style="font-size:12px;color:var(--muted);margin-left:8px"></span></div>
+  </details>
+
+  <div class="card">
+    <div class="label">오늘의 문장</div>
+    <div class="target" id="target"></div>
+    <div class="row">
+      <button id="listen">🔊 원어민 발음 듣기</button>
+      <button id="record" class="btn-rec">🎤 녹음 시작</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="result" id="result">
+      <div class="ring-row">
+        <div class="ring" id="ring"><span id="scoreNum">0</span></div>
+        <div class="subscores">
+          <div class="ss">정확도 <b id="s-acc">0</b><div class="bar"><i id="b-acc"></i></div></div>
+          <div class="ss">유창성 <b id="s-flu">0</b><div class="bar"><i id="b-flu"></i></div></div>
+          <div class="ss">완성도 <b id="s-comp">0</b><div class="bar"><i id="b-comp"></i></div></div>
+          <div class="ss">운율 <b id="s-pros">0</b><div class="bar"><i id="b-pros"></i></div></div>
+        </div>
+      </div>
+      <div class="words" id="words"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <div class="nav">
+      <button id="prev">← 이전</button>
+      <div class="count" id="count"></div>
+      <button id="next">다음 →</button>
+    </div>
+  </div>
+
+  <div class="warn">
+    <b>실행 안내:</b> <b>Chrome 또는 Edge</b>에서 열어야 마이크가 동작합니다. 메일의 "오늘의 뉴스 문장 연습하기" 버튼을 누르면 그날 문장이 자동으로 표시됩니다. Azure 키는 이 브라우저에만 저장됩니다.
+  </div>
+</div>
+
+<script>
+var DEFAULT = [
+  "Many people around the world follow the news every day.",
+  "Reading short news articles can improve your English.",
+  "Listening carefully helps you understand spoken language."
+];
+var $ = function(id){ return document.getElementById(id); };
+var params = new URLSearchParams(location.search);
+var sentences, idx = 0;
+var sParam = params.get("s");
+if(sParam){
+  sentences = decodeURIComponent(sParam).split("|").map(function(x){return x.trim();}).filter(Boolean);
+  if(sentences.length===0) sentences = DEFAULT;
+} else {
+  sentences = DEFAULT;
+}
+$("todayLabel").textContent = new Date().toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric",weekday:"long"});
+
+function loadKey(){
+  $("azKey").value = localStorage.getItem("az_key")||"";
+  $("azRegion").value = localStorage.getItem("az_region")||"koreacentral";
+  $("keyState").textContent = localStorage.getItem("az_key") ? "✓ 저장됨" : "미설정";
+}
+$("saveKey").onclick = function(){
+  localStorage.setItem("az_key",$("azKey").value.trim());
+  localStorage.setItem("az_region",$("azRegion").value.trim());
+  $("keyState").textContent="✓ 저장됨";
+  $("status").textContent="키가 저장되었습니다. 이제 녹음할 수 있어요.";
+};
+
+function cur(){ return sentences[idx]; }
+function renderTarget(){
+  $("target").textContent = cur();
+  $("count").textContent = "오늘의 " + sentences.length + "문장 · " + (idx+1) + " / " + sentences.length;
+  $("result").classList.remove("show"); $("status").textContent="";
+  $("prev").disabled = idx===0; $("next").disabled = idx===sentences.length-1;
+}
+
+$("listen").onclick = function(){
+  speechSynthesis.cancel();
+  var u = new SpeechSynthesisUtterance(cur()); u.lang="en-US"; u.rate=0.9;
+  var vs = speechSynthesis.getVoices();
+  for(var i=0;i<vs.length;i++){ if(/en-US/i.test(vs[i].lang)){ u.voice=vs[i]; break; } }
+  speechSynthesis.speak(u);
+};
+
+function makeFeedback(score,low){
+  var h = score>=90?"🏆 훌륭해요! 원어민에 가까운 발음이에요."
+        : score>=75?"👍 잘했어요! 조금만 더 다듬으면 완벽합니다."
+        : score>=60?"💪 좋아요. 아래 표시된 단어를 천천히 다시 연습해보세요."
+        : "🌱 괜찮아요. 먼저 '원어민 발음 듣기'로 들은 뒤 또박또박 따라해보세요.";
+  var d="";
+  if(low.length) d="<br><br>특히 신경 쓸 단어: <b style='color:var(--accent)'>"+low.join(", ")+"</b><br>단어 위에 마우스를 올리면 음소별 점수가 보여요.";
+  else if(score>=90) d="<br><br>모든 단어가 또렷하게 인식됐어요!";
+  return h+d;
+}
+
+var recognizing=false;
+$("record").onclick=function(){
+  if(recognizing)return;
+  var key=localStorage.getItem("az_key"), region=localStorage.getItem("az_region")||"koreacentral";
+  if(!key){$("status").textContent="⚠️ 먼저 위의 'Azure 키 입력'에서 키를 저장해주세요.";return;}
+  if(!window.SpeechSDK){$("status").textContent="⚠️ Azure SDK 로딩 실패. 새로고침 해주세요.";return;}
+  runAssessment(key,region,cur());
+};
+
+function runAssessment(key,region,refText){
+  var SDK=window.SpeechSDK;
+  var sc=SDK.SpeechConfig.fromSubscription(key,region);
+  sc.speechRecognitionLanguage="en-US";
+  var ac=SDK.AudioConfig.fromDefaultMicrophoneInput();
+  var pa=new SDK.PronunciationAssessmentConfig(refText,SDK.PronunciationAssessmentGradingSystem.HundredMark,SDK.PronunciationAssessmentGranularity.Phoneme,true);
+  pa.enableProsodyAssessment=true;
+  var rec=new SDK.SpeechRecognizer(sc,ac); pa.applyTo(rec);
+  recognizing=true; $("record").classList.add("live"); $("record").textContent="⏹ 듣는 중...";
+  $("status").textContent="🎤 지금 문장을 읽어주세요..."; $("result").classList.remove("show");
+  rec.recognizeOnceAsync(function(r){
+    stopUI();
+    if(r.reason===SDK.ResultReason.RecognizedSpeech) showResult(SDK.PronunciationAssessmentResult.fromResult(r));
+    else if(r.reason===SDK.ResultReason.NoMatch) $("status").textContent="🔇 음성이 인식되지 않았어요. 다시 시도해주세요.";
+    else $("status").textContent="⚠️ 인식 실패. 키/지역을 확인하세요.";
+    rec.close();
+  },function(e){stopUI();$("status").textContent="⚠️ 오류: "+e;rec.close();});
+}
+function stopUI(){recognizing=false;$("record").classList.remove("live");$("record").textContent="🎤 녹음 시작";}
+function setBar(s,b,v){$(s).textContent=Math.round(v);$(b).style.width=v+"%";}
+
+function showResult(pa){
+  var o=pa.pronunciationScore;
+  $("scoreNum").textContent=Math.round(o); $("ring").style.setProperty("--deg",(o*3.6)+"deg");
+  setBar("s-acc","b-acc",pa.accuracyScore); setBar("s-flu","b-flu",pa.fluencyScore);
+  setBar("s-comp","b-comp",pa.completenessScore); setBar("s-pros","b-pros",pa.prosodyScore||0);
+  var words=(pa.detailResult&&pa.detailResult.Words)||[]; var low=[]; var html="";
+  for(var i=0;i<words.length;i++){
+    var w=words[i];
+    var acc=(w.PronunciationAssessment&&w.PronunciationAssessment.AccuracyScore);
+    if(acc===undefined||acc===null) acc=100;
+    var err=w.PronunciationAssessment&&w.PronunciationAssessment.ErrorType;
+    var cls=acc>=80?"good":acc>=55?"mid":"low";
+    if(err==="Omission"||err==="Insertion")cls="low";
+    if(cls!=="good")low.push(w.Word);
+    var ph="";
+    if(w.Phonemes){ for(var j=0;j<w.Phonemes.length;j++){ var pp=w.Phonemes[j]; ph+=pp.Phoneme+":"+Math.round((pp.PronunciationAssessment&&pp.PronunciationAssessment.AccuracyScore)||0)+"  "; } }
+    html+="<span class='w "+cls+"' data-ph='"+ph+"'>"+w.Word+"</span> ";
+  }
+  $("words").innerHTML=html||"(단어 분석 없음)";
+  $("feedback").innerHTML=makeFeedback(o,low);
+  $("status").textContent=""; $("result").classList.add("show");
+}
+
+$("prev").onclick=function(){if(idx>0){idx--;renderTarget();}};
+$("next").onclick=function(){if(idx<sentences.length-1){idx++;renderTarget();}};
+loadKey(); renderTarget();
+</script>
+</body>
+</html>
