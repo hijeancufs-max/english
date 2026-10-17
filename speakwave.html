@@ -59,7 +59,8 @@ details summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:13px}
   <div class="sent" id="sent"></div>
   <div class="ko" id="ko"></div>
   <div class="chips" id="chips"></div>
-  <div class="row"><button class="b-gold" id="listen">🔊 원어민 듣기</button><button class="b-rec" id="rec">🎤 녹음</button></div>
+  <div class="row"><button class="b-gold" id="start" style="flex:2">▶ 오늘 3문장 연습 시작 (듣기→녹음→피드백)</button></div>
+  <div class="row"><button class="b-ghost" id="listen">🔊 원어민 듣기</button><button class="b-rec" id="rec">🎤 녹음</button></div>
   <div class="status" id="status">녹음 버튼을 누르고 문장을 읽으세요. 말이 끝나면 자동으로 멈춥니다.</div>
   <div class="prog" id="prog"></div>
 </div>
@@ -69,6 +70,11 @@ details summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:13px}
   <canvas id="cv"></canvas>
   <div class="legend"><span><i style="background:var(--gold)"></i>목표 억양</span><span><i style="background:var(--cyan)"></i>내 음높이</span><span><i style="background:#C9A227;height:10px;opacity:.6"></i>강세 음절(감지)</span><span><i style="background:var(--cyan);height:10px;opacity:.6"></i>약음절</span></div>
   <div class="row"><button class="b-ghost" id="replay">▶ 내 녹음 다시 듣기</button><button class="b-ghost" id="prev">← 이전</button><button class="b-ghost" id="next">다음 →</button></div>
+</div>
+
+<div class="card" id="summary" style="display:none;border-color:var(--gold)">
+  <div class="label"><span>오늘의 종합 조언</span><span class="mode on" id="sumScore"></span></div>
+  <div class="fb" id="sumFb"></div>
 </div>
 
 <div class="card result" id="result">
@@ -212,6 +218,24 @@ function setItem(i){idx=i;cur=ITEMS[i];analysis=null;liveFr=[];$("result").style
  const multi=cur.w.filter(w=>w[2]>1).map(w=>w[0]+" ("+(w[3]+1)+"번째 음절)");
  const d=new Date();$("chips").innerHTML=`<span class="chip" style="color:var(--gold2)">${d.getMonth()+1}/${d.getDate()} · ${LV[level]} · ${CAT_LABEL[cur.tp]}</span><span class="chip" style="color:var(--gold2)">${PAT[cur.pat]}</span><span class="chip">핵강세: ${cur.w[cur.focus][0]}</span>`+(multi.length?`<span class="chip">단어강세: ${multi.join(", ")}</span>`:"");
  renderLib();draw();}
+/* ===== 가이드 모드: 듣기 → 자동 녹음 → 피드백 → 다음 ===== */
+let guided=false;
+$("start").onclick=()=>{guided=true;$("summary").style.display="none";setItem(sess.findIndex(r=>!r)<0?0:sess.findIndex(r=>!r));$("status").textContent="🔊 먼저 원어민 발음을 들어보세요…";$("listen").click();};
+function nextStep(){ if(!guided)return;
+ if(sess.every(Boolean)){guided=false;showSummary();return;}
+ const n=sess.findIndex(r=>!r);$("status").innerHTML=`<button class="b-gold" id="goNext" style="width:100%">다음 문장 ▶ ${ITEMS[n].s}</button>`;
+ $("goNext").onclick=()=>{setItem(n);$("status").textContent="🔊 들어보세요…";$("listen").click();};}
+function showSummary(){const rs=sess.map(r=>r.report),avg=k=>{const v=rs.map(r=>+r[k]).filter(x=>!isNaN(x)&&x>0);return v.length?Math.round(v.reduce((a,b)=>a+b)/v.length):null;};
+ const tot=avg("total"),s=avg("stress"),i=avg("inton"),r=avg("rhythm"),acc=avg("acc");
+ const parts=[["강세",s],["억양",i],["리듬",r]].filter(x=>x[1]!=null).sort((a,b)=>a[1]-b[1]);
+ const tip={강세:"내용어(명사·동사·형용사)만 크고 길게, 기능어(a, the, to, you)는 짧고 약하게 — 문장을 '강-약-약-강' 박자로 손뼉 치며 읽어보세요.",
+  억양:"질문은 끝을 확실히 ↗, 평서문은 ↘. 평소보다 높낮이를 1.5배 과장해서 연습하면 자연스러운 폭이 몸에 익어요.",
+  리듬:"강세 음절 사이 간격을 메트로놈처럼 일정하게. 약한 음절은 뭉개듯 빠르게 지나가세요."};
+ const fb=[];fb.push(`오늘 3문장 평균 <b>${tot}점</b>${acc!=null?` · 발음 정확도 ${acc}`:""} — 강세 ${s??"–"} / 억양 ${i??"–"} / 리듬 ${r??"–"}`);
+ if(parts.length){fb.push(`가장 보완할 부분: <b>${parts[0][0]}</b> (${parts[0][1]}점) → ${tip[parts[0][0]]}`);if(parts[parts.length-1][1]>=80)fb.push(`잘한 부분: <b>${parts[parts.length-1][0]}</b> (${parts[parts.length-1][1]}점) 👍`);}
+ const worst=sess.reduce((a,b)=>a.total<b.total?a:b);fb.push(`내일 다시 읽어볼 문장: <b>"${worst.report.sentence}"</b> (${worst.total}점) — ▶ 내 녹음과 🔊 원어민을 번갈아 들어보세요.`);
+ $("sumScore").textContent=tot+"점";$("sumFb").innerHTML=fb.map(m=>`<p>• ${m}</p>`).join("");$("summary").style.display="block";$("summary").scrollIntoView({behavior:"smooth"});
+ $("status").textContent="오늘 3문장 완료! 아래 종합 조언을 확인하고 선생님께 보내세요.";}
 /* ===== 오늘의 3문장 진행 (문장별 녹음·점수 보관) ===== */
 const sess=[null,null,null];
 function renderProg(){$("prog").innerHTML=sess.map((r,i)=>`<div class="${i===idx?'cur':''} ${r?'done':''}" data-i="${i}">${CAT_LABEL[ITEMS[i].tp]}<b>${r?r.total+'점':'–'}</b>${r?'<button class="b-ghost" data-play="'+i+'">▶ 내 녹음</button>':'<span style="font-size:11px">미완료</span>'}</div>`).join("");
@@ -239,7 +263,7 @@ $("listen").onclick=()=>{
  utter=new SpeechSynthesisUtterance(cur.s);utter.lang="en-US";utter.rate=.85;utter.volume=1;
  const v=voices.find(v=>/^en[-_]US/i.test(v.lang))||voices.find(v=>/^en/i.test(v.lang));if(v)utter.voice=v;
  utter.onstart=()=>{$("status").textContent="🔊 재생 중…";};
- utter.onend=()=>{$("status").textContent="따라 읽어보세요 → 🎤 녹음";};
+ utter.onend=()=>{if(guided&&!running){$("status").textContent="이제 따라 읽으세요… 🎤 (자동 녹음 중)";setTimeout(()=>$("rec").click(),400);}else $("status").textContent="따라 읽어보세요 → 🎤 녹음";};
  utter.onerror=e=>{$("status").textContent="음성 재생 실패("+e.error+"). 폰 설정 → 텍스트 음성 변환(TTS)에서 영어 음성이 설치돼 있는지 확인하세요.";};
  setTimeout(()=>speechSynthesis.speak(utter),60);
  if(!voices.length)$("status").textContent="음성 목록을 불러오는 중… 한 번 더 눌러주세요.";
@@ -271,7 +295,7 @@ function loop(){if(!running)return;analyser.getFloatTimeDomainData(lb);const t=(
  if(speechStart>=0&&t-lastVoice>1.0&&t-speechStart>0.4){stop();return;}if(t>3+cur.w.length*0.9){stop();return;}draw();raf=requestAnimationFrame(loop);}
 function stop(){running=false;cancelAnimationFrame(raf);$("rec").textContent="🎤 녹음";$("rec").classList.remove("on");
  try{proc.disconnect();analyser.disconnect();srcNode.disconnect();}catch(e){}stream&&stream.getTracks().forEach(t=>t.stop());
- if(speechStart<0){$("status").textContent="음성이 감지되지 않았어요. 조금 더 크게 말해보세요.";draw();return;}
+ if(speechStart<0){$("status").innerHTML="음성이 감지되지 않았어요. 조금 더 크게 말해보세요."+(guided?' <button class="b-ghost b-sm" onclick="$(\'rec\').click()">🎤 다시 녹음</button>':"");draw();return;}
  const wav=toWav16k(pcm,ctxA.sampleRate);if(recURL)URL.revokeObjectURL(recURL);recURL=URL.createObjectURL(new Blob([wav],{type:"audio/wav"}));
  analyze(wav);}
 function toWav16k(chunks,sr){let n=0;for(const c of chunks)n+=c.length;const all=new Float32Array(n);let o=0;for(const c of chunks){all.set(c,o);o+=c.length;}
@@ -364,7 +388,7 @@ async function analyze(wav){
   const s=wd.syl.length>1?wd.syl.map(sy=>{let t=sy.txt;if(sy.det)t=`<em>${t.toUpperCase()}</em>`;if(sy.expected&&W[wi][2]>1)t=`<u>${t}</u>`;return t;}).join("·"):(wd.acc!=null?"정확도 "+Math.round(wd.acc):W[wi][1]?"내용어":"기능어");
   return `<div class="w ${cls}">${wd.word}<span class="s">${s}</span></div>`;}).join("");
  hist.push(total);const adv=hist.advice();if(adv)fb.push(adv);$("fb").innerHTML=fb.map(m=>`<p>• ${m}</p>`).join("");
- $("status").textContent=`종합 ${total}점 — 파형에서 금색 블록(내 강세)과 밑줄(정답 강세)을 비교해 보세요.`;draw();
+ $("status").textContent=`종합 ${total}점 — 파형에서 금색 블록(내 강세)과 밑줄(정답 강세)을 비교해 보세요.`;draw();nextStep();
 }
 
 /* ===== 그리기 ===== */
