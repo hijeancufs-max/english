@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>SpeakWave — 영어 발음·강세·억양·리듬 코치</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;800&display=swap">
+<style>
+:root{--navy:#0F1E3C;--gold:#C9A227;--gold2:#E3C45A;--bg:#0A1428;--card:#13213f;--line:rgba(255,255,255,.1);--txt:#F4F1E8;--muted:#9aa7c2;--cyan:#4FD1FF;--ok:#4CD17A;--warn:#FFB84D;--bad:#FF6B6B}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:"Paperlogy","Noto Sans KR","Pretendard",sans-serif;padding:14px 16px 40px;max-width:720px;margin:0 auto}
+header h1{font-size:21px;font-weight:800}header h1 span{color:var(--gold)}header small{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.label{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.sent{font-size:26px;font-weight:800;line-height:1.3}
+.sent b{color:var(--gold2)}
+.ko{font-size:14px;color:var(--muted);margin-top:4px}
+.chips{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.chip{font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--line)}
+.row{display:flex;gap:8px;margin-top:12px}
+button{flex:1;border:0;border-radius:12px;padding:13px 10px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer}
+.b-gold{background:var(--gold);color:var(--navy)}.b-rec{background:#D64545;color:#fff}.b-rec.on{background:#fff;color:#D64545;animation:p 1s infinite}
+.b-ghost{background:rgba(255,255,255,.08);color:var(--txt);border:1px solid var(--line)}
+.b-sm{flex:none;padding:8px 12px;font-size:13px}
+@keyframes p{50%{opacity:.6}}
+canvas{width:100%;height:300px;display:block;border-radius:12px;background:var(--navy)}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.status{font-size:13px;color:var(--muted);min-height:18px;margin-top:8px;line-height:1.5}
+.result{display:none}
+.top{display:flex;gap:16px;align-items:center}
+.ring{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;font-size:30px;font-weight:800;position:relative;flex:none}.ring::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--card)}.ring span{position:relative;z-index:1}
+.bars{flex:1;display:grid;gap:5px}.bar{font-size:12px;display:grid;grid-template-columns:52px 1fr 30px;align-items:center;gap:8px}.bar i{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.bar i b{display:block;height:100%;background:var(--gold);border-radius:4px;transition:.6s}
+.bar.local i b{background:var(--cyan)}.bar span:last-child{text-align:right;font-weight:700}
+.sep{border-top:1px dashed var(--line);margin:8px 0}
+.words{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.w{border-radius:10px;padding:6px 9px;background:rgba(255,255,255,.06);border:1.5px solid var(--line);font-size:14px;text-align:center}
+.w.ok{border-color:var(--ok)}.w.mid{border-color:var(--warn)}.w.bad{border-color:var(--bad)}.w.om{opacity:.45;text-decoration:line-through}
+.w .s{font-size:11px;color:var(--muted);display:block;margin-top:2px}.w .s em{font-style:normal;color:var(--gold);font-weight:800}.w .s u{text-decoration:none;border-bottom:2px solid var(--cyan)}
+.fb{margin-top:12px;font-size:14px;line-height:1.6;background:rgba(201,162,39,.08);border-left:3px solid var(--gold);padding:10px 12px;border-radius:0 10px 10px 0}.fb p{margin-bottom:5px}
+.lib{display:grid;gap:6px}.lib button{text-align:left;padding:10px 12px;font-size:14px;background:rgba(255,255,255,.05);color:var(--txt);border:1px solid var(--line);font-weight:600}.lib button.sel{border-color:var(--gold);background:rgba(201,162,39,.15)}.lib button small{color:var(--muted);font-weight:500;margin-left:6px}
+details summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:13px}
+.field{margin-top:8px}.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}.field input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--txt);font-family:inherit;font-size:14px}
+.tip{font-size:12px;color:var(--muted);line-height:1.6;margin-top:8px}
+.mode{font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--muted);font-weight:600}
+.mode.on{color:var(--ok);background:rgba(76,209,122,.12)}
+.tabs button{padding:8px;font-size:13px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--line)}.tabs button.on{color:var(--gold);border-color:var(--gold)}
+.prog{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}
+.prog div{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center;font-size:12px;color:var(--muted);cursor:pointer}
+.prog div.cur{border-color:var(--gold)}.prog div.done{background:rgba(76,209,122,.1)}.prog b{display:block;font-size:18px;color:var(--txt)}
+.prog button{margin-top:4px;padding:5px 6px;font-size:11px;border-radius:8px;width:100%}
+</style>
+</head>
+<body>
+<header><h1>Speak<span>Wave</span></h1><small>영어 발음 · 강세 · 억양 · 리듬 실시간 코치 — JINNY ENGLISH</small></header>
+
+<div class="card">
+  <div class="label"><span>오늘의 문장 <span id="todayN" style="color:var(--muted)"></span></span><span><span class="mode" id="quota" style="margin-right:4px"></span><span class="mode" id="mode">발음평가 연결 확인 중…</span></span></div>
+  <div class="field" style="margin:0 0 10px"><input id="student" placeholder="학생 이름 (결과 전송용)" style="padding:8px 10px;font-size:14px"></div>
+  <div class="sent" id="sent"></div>
+  <div class="ko" id="ko"></div>
+  <div class="chips" id="chips"></div>
+  <div class="row"><button class="b-gold" id="listen">🔊 원어민 듣기</button><button class="b-rec" id="rec">🎤 녹음</button></div>
+  <div class="status" id="status">녹음 버튼을 누르고 문장을 읽으세요. 말이 끝나면 자동으로 멈춥니다.</div>
+  <div class="prog" id="prog"></div>
+</div>
+
+<div class="card">
+  <div class="label"><span>음성 파형 (Pitch · Stress · Rhythm)</span></div>
+  <canvas id="cv"></canvas>
+  <div class="legend"><span><i style="background:var(--gold)"></i>목표 억양</span><span><i style="background:var(--cyan)"></i>내 음높이</span><span><i style="background:#C9A227;height:10px;opacity:.6"></i>강세 음절(감지)</span><span><i style="background:var(--cyan);height:10px;opacity:.6"></i>약음절</span></div>
+  <div class="row"><button class="b-ghost" id="replay">▶ 내 녹음 다시 듣기</button><button class="b-ghost" id="prev">← 이전</button><button class="b-ghost" id="next">다음 →</button></div>
+</div>
+
+<div class="card result" id="result">
+  <div class="label"><span>종합 평가</span><span class="mode" id="rmode"></span></div>
+  <div class="top">
+    <div class="ring" id="ring"><span id="score">0</span></div>
+    <div class="bars">
+      <div class="bar"><span>정확도</span><i><b id="b-acc"></b></i><span id="s-acc">–</span></div>
+      <div class="bar"><span>유창성</span><i><b id="b-flu"></b></i><span id="s-flu">–</span></div>
+      <div class="bar"><span>완성도</span><i><b id="b-comp"></b></i><span id="s-comp">–</span></div>
+      <div class="bar"><span>운율</span><i><b id="b-pros"></b></i><span id="s-pros">–</span></div>
+      <div class="sep"></div>
+      <div class="bar local"><span>강세</span><i><b id="b-str"></b></i><span id="s-str">–</span></div>
+      <div class="bar local"><span>억양</span><i><b id="b-int"></b></i><span id="s-int">–</span></div>
+      <div class="bar local"><span>리듬</span><i><b id="b-rhy"></b></i><span id="s-rhy">–</span></div>
+    </div>
+  </div>
+  <div class="words" id="words"></div>
+  <div class="tip">단어 테두리 = 발음 정확도(초록/노랑/빨강) · <em style="color:var(--gold);font-style:normal">금색 대문자</em> = 내가 강세 준 음절 · <u style="border-bottom:2px solid var(--cyan);text-decoration:none">밑줄</u> = 정답 강세</div>
+  <div class="fb" id="fb"></div>
+  <div class="row"><button class="b-gold" id="send">📤 오늘 결과 선생님께 보내기</button></div>
+  <div class="status" id="sendStatus"></div>
+</div>
+
+<div class="card">
+  <div class="label"><span id="libTitle">오늘의 3문장</span></div>
+  <div class="tabs" id="lvtabs" style="display:flex;gap:6px;margin-bottom:10px"></div>
+  <div class="lib" id="lib"></div>
+</div>
+
+<div class="card">
+  <details><summary>⚙️ 선생님 설정 (학생은 건드리지 않아도 됨)</summary>
+    <div class="field"><label>GAS 토큰 주소 (추천 — 학생 키 입력 불필요)</label><input id="proxy" placeholder="https://script.google.com/macros/s/…/exec"></div>
+    <div class="field"><label>또는 Azure 키 직접 입력 (이 브라우저에만 저장)</label><input id="azKey" type="password" placeholder="Azure Speech KEY 1"></div>
+    <div class="field"><label>지역</label><input id="azRegion" value="koreacentral"></div>
+    <div class="row"><button class="b-gold" id="save">저장</button><button class="b-ghost" id="test">연결 테스트</button></div>
+    <div class="tip">파일 상단 CONFIG에 GAS 주소를 넣어 배포하면 학생은 링크만 열면 됩니다. 발음평가 연결이 없어도 강세·억양·리듬은 작동합니다.</div>
+  </details>
+</div>
+<div class="tip" style="text-align:center">Chrome / Edge에서 열어야 마이크가 작동합니다</div>
+
+<script>
+window.addEventListener("error",e=>{const s=document.getElementById("status");if(s)s.textContent="오류: "+e.message;});
+const LS={get(k){try{return LS.get(k);}catch(e){return null;}},set(k,v){try{LS.set(k,v);}catch(e){}}};
+/* ===== 선생님 배포용 설정: GAS 웹앱 주소를 넣으면 학생은 아무것도 입력하지 않아도 됩니다 ===== */
+const CONFIG={PROXY_URL:"", REGION:"koreacentral", DAILY_LIMIT:3}; // DAILY_LIMIT: 기기당 하루 발음평가 횟수 (0=무제한)
+const quota={key(){return "sw_q_"+new Date().toISOString().slice(0,10);},used(){return +(LS.get(this.key())||0);},left(){return CONFIG.DAILY_LIMIT?Math.max(0,CONFIG.DAILY_LIMIT-this.used()):Infinity;},use(){LS.set(this.key(),this.used()+1);}};
+
+/* ===== 문장 데이터  c:내용어(1)/기능어(0) n:음절수 st:강세음절(0부터) pat:억양 focus:핵강세 단어 ===== */
+const LEVELS={
+ "A2":{
+  "날씨":[
+  {s:"It's going to rain this afternoon.",ko:"오늘 오후에 비가 올 거야.",pat:"fall",focus:5,w:[["It's",0,1],["going",1,2,0],["to",0,1],["rain",1,1],["this",0,1],["afternoon",1,3,2]]},
+  {s:"What's the weather like in Seoul?",ko:"서울 날씨는 어때?",pat:"fall",focus:5,w:[["What's",1,1],["the",0,1],["weather",1,2,0],["like",1,1],["in",0,1],["Seoul",1,1]]},
+  {s:"Don't forget your umbrella.",ko:"우산 잊지 마.",pat:"fall",focus:3,w:[["Don't",1,1],["forget",1,2,1],["your",0,1],["umbrella",1,3,1]]},
+  {s:"It's getting colder every day.",ko:"날이 갈수록 추워지고 있어.",pat:"fall",focus:4,w:[["It's",0,1],["getting",1,2,0],["colder",1,2,0],["every",1,2,0],["day",1,1]]},
+  {s:"The sky is clear and blue.",ko:"하늘이 맑고 파래.",pat:"fall",focus:5,w:[["The",0,1],["sky",1,1],["is",0,1],["clear",1,1],["and",0,1],["blue",1,1]]},
+  {s:"Is it still raining outside?",ko:"밖에 아직 비 와?",pat:"rise",focus:4,w:[["Is",0,1],["it",0,1],["still",1,1],["raining",1,2,0],["outside",1,2,1]]},
+  {s:"I hope it snows on Christmas.",ko:"크리스마스에 눈이 오면 좋겠어.",pat:"fall",focus:5,w:[["I",0,1],["hope",1,1],["it",0,1],["snows",1,1],["on",0,1],["Christmas",1,2,0]]}],
+  "응원":[
+  {s:"The early bird catches the worm.",ko:"일찍 일어나는 새가 벌레를 잡는다.",pat:"fall",focus:5,w:[["The",0,1],["early",1,2,0],["bird",1,1],["catches",1,2,0],["the",0,1],["worm",1,1]]},
+  {s:"Two heads are better than one.",ko:"백지장도 맞들면 낫다.",pat:"fall",focus:5,w:[["Two",1,1],["heads",1,1],["are",0,1],["better",1,2,0],["than",0,1],["one",1,1]]},
+  {s:"Don't judge a book by its cover.",ko:"겉모습으로 판단하지 마라.",pat:"fall",focus:6,w:[["Don't",1,1],["judge",1,1],["a",0,1],["book",1,1],["by",0,1],["its",0,1],["cover",1,2,0]]},
+  {s:"Every day is a new beginning.",ko:"매일이 새로운 시작이야.",pat:"fall",focus:5,w:[["Every",1,2,0],["day",1,1],["is",0,1],["a",0,1],["new",1,1],["beginning",1,3,1]]},
+  {s:"Mistakes help you learn.",ko:"실수는 배움을 도와줘.",pat:"fall",focus:3,w:[["Mistakes",1,2,1],["help",1,1],["you",0,1],["learn",1,1]]},
+  {s:"Keep going, you're almost there.",ko:"계속해, 거의 다 왔어.",pat:"fall",focus:4,w:[["Keep",1,1],["going",1,2,0],["you're",0,1],["almost",1,2,0],["there",1,1]]},
+  {s:"Small steps lead to big changes.",ko:"작은 걸음이 큰 변화를 만든다.",pat:"fall",focus:5,w:[["Small",1,1],["steps",1,1],["lead",1,1],["to",0,1],["big",1,1],["changes",1,2,0]]}],
+  "사회":[
+  {s:"Would you like to come to my party?",ko:"내 파티에 올래?",pat:"rise",focus:7,w:[["Would",0,1],["you",0,1],["like",1,1],["to",0,1],["come",1,1],["to",0,1],["my",0,1],["party",1,2,0]]},
+  {s:"Thanks for helping me yesterday.",ko:"어제 도와줘서 고마워.",pat:"fall",focus:4,w:[["Thanks",1,1],["for",0,1],["helping",1,2,0],["me",0,1],["yesterday",1,3,0]]},
+  {s:"My sister is older than me.",ko:"우리 언니는 나보다 나이가 많아.",pat:"fall",focus:3,w:[["My",0,1],["sister",1,2,0],["is",0,1],["older",1,2,0],["than",0,1],["me",0,1]]},
+  {s:"How many people are in your family?",ko:"가족이 몇 명이야?",pat:"fall",focus:6,w:[["How",1,1],["many",1,2,0],["people",1,2,0],["are",0,1],["in",0,1],["your",0,1],["family",1,3,0]]},
+  {s:"You should drink more water.",ko:"물을 더 마셔야 해.",pat:"fall",focus:4,w:[["You",0,1],["should",0,1],["drink",1,1],["more",1,1],["water",1,2,0]]},
+  {s:"Could you take a picture of us?",ko:"저희 사진 좀 찍어 주시겠어요?",pat:"rise",focus:4,w:[["Could",0,1],["you",0,1],["take",1,1],["a",0,1],["picture",1,2,0],["of",0,1],["us",0,1]]},
+  {s:"What time does the movie start?",ko:"영화 몇 시에 시작해?",pat:"fall",focus:5,w:[["What",1,1],["time",1,1],["does",0,1],["the",0,1],["movie",1,2,0],["start",1,1]]}]},
+ "B1":{
+  "날씨":[
+  {s:"The forecast says it'll be sunny all weekend.",ko:"예보에 따르면 주말 내내 맑을 거래.",pat:"fall",focus:7,w:[["The",0,1],["forecast",1,2,0],["says",1,1],["it'll",0,1],["be",0,1],["sunny",1,2,0],["all",1,1],["weekend",1,2,0]]},
+  {s:"If it rains tomorrow, we'll stay at home.",ko:"내일 비가 오면 집에 있을 거야.",pat:"fall",focus:7,w:[["If",0,1],["it",0,1],["rains",1,1],["tomorrow",1,3,1],["we'll",0,1],["stay",1,1],["at",0,1],["home",1,1]]},
+  {s:"It's much colder than it was last week.",ko:"지난주보다 훨씬 추워졌어.",pat:"fall",focus:7,w:[["It's",0,1],["much",1,1],["colder",1,2,0],["than",0,1],["it",0,1],["was",0,1],["last",1,1],["week",1,1]]},
+  {s:"The typhoon is expected to arrive tonight.",ko:"태풍이 오늘 밤 도착할 것으로 예상돼.",pat:"fall",focus:6,w:[["The",0,1],["typhoon",1,2,0],["is",0,1],["expected",1,3,1],["to",0,1],["arrive",1,2,1],["tonight",1,2,1]]},
+  {s:"Autumn leaves are turning red and yellow.",ko:"가을 잎이 빨갛고 노랗게 물들고 있어.",pat:"fall",focus:6,w:[["Autumn",1,2,0],["leaves",1,1],["are",0,1],["turning",1,2,0],["red",1,1],["and",0,1],["yellow",1,2,0]]},
+  {s:"Did you hear the thunder last night?",ko:"어젯밤 천둥소리 들었어?",pat:"rise",focus:6,w:[["Did",0,1],["you",0,1],["hear",1,1],["the",0,1],["thunder",1,2,0],["last",1,1],["night",1,1]]},
+  {s:"Spring is my favorite season because of the flowers.",ko:"꽃 때문에 봄이 제일 좋아.",pat:"fall",focus:8,w:[["Spring",1,1],["is",0,1],["my",0,1],["favorite",1,3,0],["season",1,2,0],["because",0,2,1],["of",0,1],["the",0,1],["flowers",1,2,0]]}],
+  "응원":[
+  {s:"Actions speak louder than words.",ko:"행동이 말보다 더 큰 소리를 낸다.",pat:"fall",focus:4,w:[["Actions",1,2,0],["speak",1,1],["louder",1,2,0],["than",0,1],["words",1,1]]},
+  {s:"Every cloud has a silver lining.",ko:"모든 구름에는 은빛 테두리가 있다.",pat:"fall",focus:5,w:[["Every",1,2,0],["cloud",1,1],["has",1,1],["a",0,1],["silver",1,2,0],["lining",1,2,0]]},
+  {s:"When in Rome, do as the Romans do.",ko:"로마에 가면 로마법을 따르라.",pat:"fall",focus:6,w:[["When",0,1],["in",0,1],["Rome",1,1],["do",1,1],["as",0,1],["the",0,1],["Romans",1,2,0],["do",1,1]]},
+  {s:"Where there's a will, there's a way.",ko:"뜻이 있는 곳에 길이 있다.",pat:"fall",focus:6,w:[["Where",0,1],["there's",0,1],["a",0,1],["will",1,1],["there's",0,1],["a",0,1],["way",1,1]]},
+  {s:"Don't put off until tomorrow what you can do today.",ko:"오늘 할 수 있는 일을 내일로 미루지 마라.",pat:"fall",focus:9,w:[["Don't",1,1],["put",1,1],["off",1,1],["until",0,2,1],["tomorrow",1,3,1],["what",0,1],["you",0,1],["can",0,1],["do",1,1],["today",1,2,1]]},
+  {s:"The journey of a thousand miles begins with a single step.",ko:"천 리 길도 한 걸음부터.",pat:"fall",focus:10,w:[["The",0,1],["journey",1,2,0],["of",0,1],["a",0,1],["thousand",1,2,0],["miles",1,1],["begins",1,2,1],["with",0,1],["a",0,1],["single",1,2,0],["step",1,1]]},
+  {s:"Believe you can and you're halfway there.",ko:"할 수 있다고 믿으면 이미 절반은 온 거야.",pat:"fall",focus:6,w:[["Believe",1,2,1],["you",0,1],["can",1,1],["and",0,1],["you're",0,1],["halfway",1,2,0],["there",1,1]]}],
+  "사회":[
+  {s:"Why don't we take a break and have lunch?",ko:"잠깐 쉬고 점심 먹는 게 어때?",pat:"fall",focus:8,w:[["Why",1,1],["don't",1,1],["we",0,1],["take",1,1],["a",0,1],["break",1,1],["and",0,1],["have",1,1],["lunch",1,1]]},
+  {s:"I really appreciate everything you've done for me.",ko:"나를 위해 해준 모든 것에 정말 감사해.",pat:"fall",focus:3,w:[["I",0,1],["really",1,2,0],["appreciate",1,4,1],["everything",1,3,0],["you've",0,1],["done",1,1],["for",0,1],["me",0,1]]},
+  {s:"My grandmother tells the best stories.",ko:"우리 할머니는 최고의 이야기를 들려주셔.",pat:"fall",focus:5,w:[["My",0,1],["grandmother",1,3,0],["tells",1,1],["the",0,1],["best",1,1],["stories",1,2,0]]},
+  {s:"How often do you visit your grandparents?",ko:"조부모님을 얼마나 자주 찾아뵈어?",pat:"fall",focus:6,w:[["How",1,1],["often",1,2,0],["do",0,1],["you",0,1],["visit",1,2,0],["your",0,1],["grandparents",1,3,0]]},
+  {s:"I've been trying to eat more vegetables lately.",ko:"요즘 채소를 더 먹으려고 노력 중이야.",pat:"fall",focus:6,w:[["I've",0,1],["been",0,1],["trying",1,2,0],["to",0,1],["eat",1,1],["more",1,1],["vegetables",1,3,0],["lately",1,2,0]]},
+  {s:"Excuse me, how do I get to the station?",ko:"실례지만 역에 어떻게 가나요?",pat:"fall",focus:8,w:[["Excuse",1,2,1],["me",0,1],["how",1,1],["do",0,1],["I",0,1],["get",1,1],["to",0,1],["the",0,1],["station",1,2,0]]},
+  {s:"Have you finished your homework yet?",ko:"숙제 다 했어?",pat:"rise",focus:4,w:[["Have",0,1],["you",0,1],["finished",1,2,0],["your",0,1],["homework",1,2,0],["yet",0,1]]}]}
+};
+/* 오늘의 3문장: ① 날씨 ② 응원(명언) ③ 사회 — 날짜에 따라 매일 바뀜 (7일 주기, 레벨마다 다른 조합) */
+const CATS=["날씨","응원","사회"],CAT_LABEL={"날씨":"🌤 날씨","응원":"💪 응원·명언","사회":"👫 사회·일상"};
+const DAY=Math.floor((Date.now()+9*3600e3)/86400e3);
+function todayItems(bank,lv){return CATS.map((c,i)=>Object.assign({tp:c},bank[c][(DAY+lv*2+i*3)%bank[c].length]));}
+const LV=Object.keys(LEVELS);let level=+(LS.get("sw_level")||0);let ITEMS=todayItems(LEVELS[LV[level]],level);
+/* AI 레벨 추천: 최근 3회 평균으로 승급/하향 제안 */
+const hist={key(){return "sw_hist_"+level;},get(){try{return JSON.parse(LS.get(this.key())||"[]");}catch(e){return[];}},push(s){const h=this.get();h.push(s);LS.set(this.key(),JSON.stringify(h.slice(-10)));},
+ advice(){const h=this.get().slice(-3);if(h.length<3)return"";const a=Math.round(h.reduce((x,y)=>x+y)/3);if(a>=85&&level<LV.length-1)return`최근 3회 평균 ${a}점 — <b>${LV[level+1]}</b>에 도전해 보세요!`;if(a<55&&level>0)return`최근 3회 평균 ${a}점 — <b>${LV[level-1]}</b>로 기본기를 다져볼까요?`;return"";}};
+const PAT={rise:"↗ Yes/No 질문 — 끝 올리기",fall:"↘ 평서문·Wh 질문 — 끝 내리기",list:"↗↗↘ 나열 — 마지막만 내리기"};
+const $=id=>document.getElementById(id);
+let idx=0,cur,ctxA,stream,proc,srcNode,analyser,pcm=[],running=false,t0=0,liveFr=[],speechStart=-1,lastVoice=-1,raf=0;
+let analysis=null,recURL=null,token=null,tokenAt=0;
+const cv=$("cv"),g=cv.getContext("2d");
+function fit(){const r=cv.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=300*devicePixelRatio;g.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);draw();}
+addEventListener("resize",fit);
+
+/* ===== 설정 ===== */
+const cfg={get proxy(){return LS.get("sw_proxy")||CONFIG.PROXY_URL;},get key(){return LS.get("sw_key")||"";},get region(){return LS.get("sw_region")||CONFIG.REGION;}};
+$("proxy").value=LS.get("sw_proxy")||"";$("azKey").value=cfg.key;$("azRegion").value=cfg.region;
+$("save").onclick=()=>{LS.set("sw_proxy",$("proxy").value.trim());LS.set("sw_key",$("azKey").value.trim());LS.set("sw_region",$("azRegion").value.trim());token=null;checkMode();};
+$("test").onclick=async()=>{$("mode").textContent="연결 테스트 중…";try{const a=await auth();$("mode").textContent="✓ 발음평가 연결됨 ("+(a.mode==="token"?"GAS 토큰":"직접 키")+")";$("mode").className="mode on";}catch(e){$("mode").textContent="✕ "+e.message;$("mode").className="mode";}};
+async function auth(){
+ if(cfg.proxy){ if(token&&Date.now()-tokenAt<8*60*1000)return{mode:"token",token,region:cfg.region};
+  const r=await fetch(cfg.proxy,{cache:"no-store"});const j=await r.json();if(!j.token||j.token.length<50)throw new Error("GAS 토큰 발급 실패: "+(j.error||"응답 확인"));
+  token=j.token;tokenAt=Date.now();if(j.region)LS.set("sw_region",j.region);return{mode:"token",token,region:j.region||cfg.region};}
+ if(cfg.key)return{mode:"key",key:cfg.key,region:cfg.region};
+ throw new Error("발음평가 미연결 (강세·억양·리듬만 평가)");}
+function updateQuota(){if(!CONFIG.DAILY_LIMIT)return;const l=quota.left();$("quota").textContent=`오늘 발음평가 ${CONFIG.DAILY_LIMIT-l}/${CONFIG.DAILY_LIMIT}`;$("quota").style.color=l?"var(--muted)":"var(--warn)";}
+async function checkMode(){updateQuota();try{const a=await auth();$("mode").textContent="✓ 발음평가 연결됨";$("mode").className="mode on";}catch(e){$("mode").textContent="발음평가 미연결 · 운율만 평가";$("mode").className="mode";}}
+
+/* ===== 문장 UI ===== */
+function renderLib(){$("lvtabs").innerHTML=LV.map((n,i)=>`<button class="${i===level?'on':''}" data-l="${i}">${n}</button>`).join("");
+  $("lib").innerHTML=ITEMS.map((it,i)=>`<button class="${i===idx?'sel':''}" data-i="${i}"><span style="color:var(--gold);font-size:11px;margin-right:6px">${i+1}. ${CAT_LABEL[it.tp]}</span>${it.s}<small>${it.ko}</small></button>`).join("");}
+$("lvtabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;level=+b.dataset.l;LS.set("sw_level",level);ITEMS=todayItems(LEVELS[LV[level]],level);setItem(0);};
+$("lib").onclick=e=>{const b=e.target.closest("button");if(b)setItem(+b.dataset.i);};
+$("prev").onclick=()=>setItem((idx+ITEMS.length-1)%ITEMS.length);$("next").onclick=()=>setItem((idx+1)%ITEMS.length);
+function setItem(i){idx=i;cur=ITEMS[i];analysis=null;liveFr=[];$("result").style.display="none";
+ $("sent").innerHTML=cur.w.map((w,k)=>k===cur.focus?`<b>${w[0]}</b>`:w[0]).join(" ")+(cur.s.match(/[?!.]$/)||[""])[0];
+ $("ko").textContent=cur.ko;renderProg();
+ const multi=cur.w.filter(w=>w[2]>1).map(w=>w[0]+" ("+(w[3]+1)+"번째 음절)");
+ const d=new Date();$("chips").innerHTML=`<span class="chip" style="color:var(--gold2)">${d.getMonth()+1}/${d.getDate()} · ${LV[level]} · ${CAT_LABEL[cur.tp]}</span><span class="chip" style="color:var(--gold2)">${PAT[cur.pat]}</span><span class="chip">핵강세: ${cur.w[cur.focus][0]}</span>`+(multi.length?`<span class="chip">단어강세: ${multi.join(", ")}</span>`:"");
+ renderLib();draw();}
+/* ===== 오늘의 3문장 진행 (문장별 녹음·점수 보관) ===== */
+const sess=[null,null,null];
+function renderProg(){$("prog").innerHTML=sess.map((r,i)=>`<div class="${i===idx?'cur':''} ${r?'done':''}" data-i="${i}">${CAT_LABEL[ITEMS[i].tp]}<b>${r?r.total+'점':'–'}</b>${r?'<button class="b-ghost" data-play="'+i+'">▶ 내 녹음</button>':'<span style="font-size:11px">미완료</span>'}</div>`).join("");
+ const done=sess.filter(Boolean).length;$("todayN").textContent=`${idx+1}/3 · 완료 ${done}/3`;}
+$("prog").onclick=e=>{const p=e.target.closest("[data-play]");if(p){const r=sess[+p.dataset.play];if(r&&r.url)new Audio(r.url).play();return;}const d=e.target.closest("[data-i]");if(d)setItem(+d.dataset.i);};
+/* ===== 교사 전송 (GAS doPost → 구글 시트) ===== */
+let lastReport=null;$("student").value=LS.get("sw_student")||"";$("student").onchange=()=>LS.set("sw_student",$("student").value.trim());
+$("send").onclick=async()=>{
+ const reps=sess.filter(Boolean).map(r=>r.report);if(!reps.length){$("sendStatus").textContent="먼저 녹음해서 결과를 받으세요.";return;}
+ if(!cfg.proxy){$("sendStatus").textContent="전송 주소(GAS)가 설정되지 않았어요. 선생님께 알려주세요.";return;}
+ const name=$("student").value.trim();if(!name){$("sendStatus").textContent="학생 이름을 입력하세요.";$("student").focus();return;}
+ LS.set("sw_student",name);reps.forEach(r=>r.student=name);
+ $("send").disabled=true;$("sendStatus").textContent="전송 중…";
+ try{let ok=0;for(const rep of reps){const r=await fetch(cfg.proxy,{method:"POST",body:JSON.stringify({type:"report",...rep,at:new Date().toISOString()})});const j=await r.json().catch(()=>({ok:true}));if(j.ok!==false)ok++;}
+  $("sendStatus").textContent=`✓ 오늘 ${ok}/3 문장 결과를 선생님께 보냈어요!`;}
+ catch(e){$("sendStatus").textContent="전송 실패: "+e.message;}
+ $("send").disabled=false;};
+
+let utter=null,voices=[];
+function loadVoices(){voices=speechSynthesis.getVoices();}
+if("speechSynthesis" in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+$("listen").onclick=()=>{
+ if(!("speechSynthesis" in window)){$("status").textContent="이 브라우저는 음성 읽기를 지원하지 않아요. Chrome/Edge로 열어주세요.";return;}
+ speechSynthesis.cancel();if(!voices.length)loadVoices();
+ utter=new SpeechSynthesisUtterance(cur.s);utter.lang="en-US";utter.rate=.85;utter.volume=1;
+ const v=voices.find(v=>/^en[-_]US/i.test(v.lang))||voices.find(v=>/^en/i.test(v.lang));if(v)utter.voice=v;
+ utter.onstart=()=>{$("status").textContent="🔊 재생 중…";};
+ utter.onend=()=>{$("status").textContent="따라 읽어보세요 → 🎤 녹음";};
+ utter.onerror=e=>{$("status").textContent="음성 재생 실패("+e.error+"). 폰 설정 → 텍스트 음성 변환(TTS)에서 영어 음성이 설치돼 있는지 확인하세요.";};
+ setTimeout(()=>speechSynthesis.speak(utter),60);
+ if(!voices.length)$("status").textContent="음성 목록을 불러오는 중… 한 번 더 눌러주세요.";
+};
+$("replay").onclick=()=>{if(recURL)new Audio(recURL).play();};
+
+/* ===== 피치 검출 ===== */
+function pitch(buf,sr,lo=75,hi=400){let rms=0;for(let i=0;i<buf.length;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/buf.length);if(rms<0.012)return{f0:-1,rms};
+ const minL=Math.floor(sr/hi),maxL=Math.floor(sr/lo),N=buf.length,c=new Float32Array(maxL+2);let best=-1,bc=0;
+ for(let L=minL;L<=maxL;L++){let s=0,a=0,b=0;for(let i=0;i<N-L;i++){s+=buf[i]*buf[i+L];a+=buf[i]*buf[i];b+=buf[i+L]*buf[i+L];}c[L]=s/Math.sqrt(a*b+1e-9);if(c[L]>bc){bc=c[L];best=L;}}
+ if(bc<0.86)return{f0:-1,rms};for(let L=minL+1;L<maxL;L++)if(c[L]>=bc*0.93&&c[L-1]<c[L]&&c[L+1]<=c[L]){best=L;break;}
+ const y0=c[best-1],y1=c[best],y2=c[best+1],d=(y0-y2)/(2*(y0-2*y1+y2)||1);return{f0:sr/(best+d),rms};}
+const st=f=>12*Math.log2(f/100);
+const median=a=>{const s=a.slice().sort((x,y)=>x-y);return s.length?s[s.length>>1]:0;};
+
+/* ===== 녹음 ===== */
+$("rec").onclick=async()=>{if(running){stop();return;}
+ try{ctxA=ctxA||new(window.AudioContext||window.webkitAudioContext)();await ctxA.resume();
+  stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  srcNode=ctxA.createMediaStreamSource(stream);analyser=ctxA.createAnalyser();analyser.fftSize=2048;proc=ctxA.createScriptProcessor(4096,1,1);
+  pcm=[];proc.onaudioprocess=e=>{pcm.push(new Float32Array(e.inputBuffer.getChannelData(0)));};
+  srcNode.connect(analyser);analyser.connect(proc);proc.connect(ctxA.destination);
+  liveFr=[];speechStart=-1;lastVoice=-1;analysis=null;$("result").style.display="none";running=true;t0=performance.now();
+  $("rec").textContent="■ 정지";$("rec").classList.add("on");$("status").textContent="듣고 있어요… 문장을 읽으세요.";loop();
+ }catch(e){$("status").textContent="마이크를 열 수 없어요: "+e.message;}};
+const lb=new Float32Array(2048);
+function loop(){if(!running)return;analyser.getFloatTimeDomainData(lb);const t=(performance.now()-t0)/1000,p=pitch(lb,ctxA.sampleRate);liveFr.push({t,f0:p.f0});
+ if(p.f0>0){if(speechStart<0)speechStart=t;lastVoice=t;}
+ if(speechStart>=0&&t-lastVoice>1.0&&t-speechStart>0.4){stop();return;}if(t>3+cur.w.length*0.9){stop();return;}draw();raf=requestAnimationFrame(loop);}
+function stop(){running=false;cancelAnimationFrame(raf);$("rec").textContent="🎤 녹음";$("rec").classList.remove("on");
+ try{proc.disconnect();analyser.disconnect();srcNode.disconnect();}catch(e){}stream&&stream.getTracks().forEach(t=>t.stop());
+ if(speechStart<0){$("status").textContent="음성이 감지되지 않았어요. 조금 더 크게 말해보세요.";draw();return;}
+ const wav=toWav16k(pcm,ctxA.sampleRate);if(recURL)URL.revokeObjectURL(recURL);recURL=URL.createObjectURL(new Blob([wav],{type:"audio/wav"}));
+ analyze(wav);}
+function toWav16k(chunks,sr){let n=0;for(const c of chunks)n+=c.length;const all=new Float32Array(n);let o=0;for(const c of chunks){all.set(c,o);o+=c.length;}
+ const ratio=sr/16000,len=Math.floor(n/ratio),out=new Float32Array(len);for(let i=0;i<len;i++){const x=i*ratio,k=Math.floor(x),f=x-k;out[i]=all[k]*(1-f)+(all[k+1]||0)*f;}
+ const b=new ArrayBuffer(44+len*2),v=new DataView(b);const W=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i));};
+ W(0,"RIFF");v.setUint32(4,36+len*2,true);W(8,"WAVE");W(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,16000,true);v.setUint32(28,32000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);W(36,"data");v.setUint32(40,len*2,true);
+ for(let i=0;i<len;i++){const s=Math.max(-1,Math.min(1,out[i]));v.setInt16(44+i*2,s<0?s*32768:s*32767,true);}
+ return b;}
+
+/* ===== 분석 ===== */
+function offlineFrames(wav){const v=new DataView(wav),n=(wav.byteLength-44)/2,a=new Float32Array(n);for(let i=0;i<n;i++)a[i]=v.getInt16(44+i*2,true)/32768;
+ const win=640,hop=160,fr=[];for(let s=0;s+win<=n;s+=hop){const p=pitch(a.subarray(s,s+win),16000);fr.push({t:(s+win/2)/16000,f0:p.f0,db:20*Math.log10(p.rms+1e-6)});}
+ for(let i=0;i<fr.length;i++){if(fr[i].f0<0)continue;const w=[];for(let j=i-2;j<=i+2;j++)if(fr[j]&&fr[j].f0>0)w.push(fr[j].f0);fr[i].f0=median(w);}
+ return{fr,dur:n/16000};}
+async function azure(wav){const a=await auth();const h={"Content-Type":"audio/wav; codecs=audio/pcm; samplerate=16000","Accept":"application/json",
+ "Pronunciation-Assessment":btoa(JSON.stringify({ReferenceText:cur.s,GradingSystem:"HundredMark",Granularity:"Phoneme",Dimension:"Comprehensive",EnableMiscue:true,EnableProsodyAssessment:true}))};
+ if(a.mode==="token")h["Authorization"]="Bearer "+a.token;else h["Ocp-Apim-Subscription-Key"]=a.key;
+ const r=await fetch(`https://${a.region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US&format=detailed`,{method:"POST",headers:h,body:wav});
+ if(!r.ok)throw new Error("Azure "+r.status);const j=await r.json();if(j.RecognitionStatus!=="Success"||!j.NBest)throw new Error("인식 실패: "+j.RecognitionStatus);return j.NBest[0];}
+function localSegments(fr,dur){ // Azure 없을 때: 에너지 피크로 음절 근사 분할
+ const total=cur.w.reduce((a,w)=>a+w[2],0),db=fr.map(f=>f.db),sm=db.map((_,i)=>{let s=0,c=0;for(let j=i-3;j<=i+3;j++)if(db[j]!==undefined){s+=db[j];c++;}return s/c;});
+ const base=median(sm)-3;let peaks=[];for(let i=2;i<sm.length-2;i++)if(sm[i]>base&&sm[i]>=sm[i-1]&&sm[i]>=sm[i+1]&&sm[i]>sm[i-2]&&sm[i]>sm[i+2])peaks.push(i);
+ const pk=[];for(const p of peaks){if(pk.length&&p-pk[pk.length-1]<8){if(sm[p]>sm[pk[pk.length-1]])pk[pk.length-1]=p;}else pk.push(p);}
+ let sel=pk.slice().sort((a,b)=>sm[b]-sm[a]).slice(0,total).sort((a,b)=>a-b);
+ while(sel.length<total&&sel.length){let li=0,ld=0;for(let i=0;i<sel.length;i++){const d=(sel[i+1]||fr.length)-sel[i];if(d>ld){ld=d;li=i;}}sel.splice(li+1,0,Math.floor(sel[li]+ld/2));}
+ const bounds=[];for(let i=0;i<sel.length;i++){let s=i?sel[i-1]:0,e=sel[i+1]||fr.length-1,lo=sel[i],hi=sel[i];for(let k=s;k<sel[i];k++)if(sm[k]<sm[lo])lo=k;for(let k=sel[i];k<e;k++)if(sm[k]<sm[hi])hi=k;bounds.push([i?lo:Math.max(0,sel[i]-15),i<sel.length-1?hi:Math.min(fr.length-1,sel[i]+15)]);}
+ let k=0;return cur.w.map(w=>{const sy=[];for(let i=0;i<w[2]&&k<bounds.length;i++,k++)sy.push({s:fr[bounds[k][0]].t,e:fr[bounds[k][1]].t,txt:"·"});return{word:w[0],syl:sy,s:sy[0]?.s,e:sy[sy.length-1]?.e,acc:null,err:null};});}
+function azureWords(nb){const norm=s=>s.toLowerCase().replace(/[^a-z']/g,"");const aw=nb.Words||[];let j=0;
+ return cur.w.map(w=>{let m=null;for(let k=j;k<Math.min(aw.length,j+3);k++)if(norm(aw[k].Word)===norm(w[0])){m=aw[k];j=k+1;break;}
+  if(!m||m.PronunciationAssessment?.ErrorType==="Omission")return{word:w[0],syl:[],acc:m?m.PronunciationAssessment.AccuracyScore:0,err:"Omission",pros:m?.PronunciationAssessment?.Feedback?.Prosody};
+  const syl=(m.Syllables||[]).map(s=>({s:s.Offset/1e7,e:(s.Offset+s.Duration)/1e7,txt:s.Grapheme||s.Syllable}));
+  return{word:w[0],syl,s:m.Offset/1e7,e:(m.Offset+m.Duration)/1e7,acc:m.PronunciationAssessment.AccuracyScore,err:m.PronunciationAssessment.ErrorType,pros:m.PronunciationAssessment.Feedback?.Prosody};});}
+function stats(fr,s,e,ref){const v=fr.filter(f=>f.t>=s&&f.t<=e),vo=v.filter(f=>f.f0>0).map(f=>st(f.f0)-ref);vo.sort((a,b)=>a-b);
+ return{pk:vo.length?vo[Math.floor(vo.length*0.9)]:-6,db:v.length?v.reduce((a,f)=>a+f.db,0)/v.length:-60,dur:e-s,mean:vo.length?vo.reduce((a,b)=>a+b)/vo.length:-6};}
+const z=(arr,k)=>{const m=arr.reduce((a,x)=>a+x[k],0)/arr.length,sd=Math.sqrt(arr.reduce((a,x)=>a+(x[k]-m)**2,0)/arr.length)||1;return x=>(x[k]-m)/sd;};
+const clamp=(x,a=0,b=100)=>Math.max(a,Math.min(b,x));
+
+async function analyze(wav){
+ $("status").textContent="분석 중…";const{fr,dur}=offlineFrames(wav);const voiced=fr.filter(f=>f.f0>0),ref=median(voiced.map(f=>st(f.f0)));
+ let nb=null,words,note="";
+ if(quota.left()<=0){words=localSegments(fr,dur);note=" · 오늘 발음평가 "+CONFIG.DAILY_LIMIT+"/"+CONFIG.DAILY_LIMIT+" 사용 — 내일 다시";}
+ else{try{nb=await azure(wav);words=azureWords(nb);quota.use();}catch(e){words=localSegments(fr,dur);note=e.message.includes("미연결")?"":" · "+e.message;}}
+ updateQuota();
+ const W=cur.w;const fb=[];
+ /* 음절 특징 → 두드러짐(prominence) */
+ const all=[];words.forEach((wd,wi)=>wd.syl.forEach((sy,si)=>{Object.assign(sy,stats(fr,sy.s,sy.e,ref));sy.wi=wi;sy.si=si;sy.content=W[wi][1];sy.expected=W[wi][2]>1?si===Math.min(W[wi][3],wd.syl.length-1):W[wi][1]===1;all.push(sy);}));
+ let stress=null,inton=null,rhythm=null;
+ if(all.length>=2){const zp=z(all,"pk"),ze=z(all,"db"),zd=z(all,"dur");all.forEach(s=>s.P=zp(s)+ze(s)+0.7*zd(s));
+  /* 강세 */
+  let multi=0,multiOk=0;words.forEach((wd,wi)=>{if(wd.syl.length<2)return;const det=wd.syl.reduce((a,b)=>a.P>b.P?a:b);wd.syl.forEach(s=>s.det=s===det);multi++;const ex=Math.min(W[wi][3],wd.syl.length-1);
+   if(det.si===ex)multiOk++;else fb.push(`<b>${wd.word}</b>: 강세가 <u>${ex+1}번째 음절</u>에 와야 하는데 ${det.si+1}번째가 더 세게 들렸어요.`);});
+  words.forEach(wd=>{if(wd.syl.length===1)wd.syl[0].det=wd.syl[0].content===1;});
+  const cs=all.filter(s=>s.content===1&&s.expected),fs=all.filter(s=>s.content===0);
+  const sep=cs.length&&fs.length?(cs.reduce((a,s)=>a+s.P,0)/cs.length-fs.reduce((a,s)=>a+s.P,0)/fs.length):1;
+  const sepScore=clamp(40+sep*55);if(sep<0.5)fb.push(`<b>${W.filter(w=>!w[1]).map(w=>w[0]).join(", ")}</b> 같은 기능어가 너무 또렷해요. 내용어(<b>${W.filter(w=>w[1]).map(w=>w[0]).join(", ")}</b>)만 튀어나오게, 나머지는 짧고 약하게.`);
+  const wp=words.map(wd=>wd.syl.length?Math.max(...wd.syl.map(s=>s.P)):-9),fi=wp.indexOf(Math.max(...wp));const focusOk=fi===cur.focus;
+  if(!focusOk&&wp[fi]>-9)fb.push(`문장에서 가장 두드러져야 할 단어는 <b>${W[cur.focus][0]}</b>인데 <b>${words[fi].word}</b>가 가장 강하게 들렸어요.`);
+  stress=Math.round(multi?(multiOk/multi)*45+sepScore*0.35+(focusOk?100:50)*0.2:sepScore*0.65+(focusOk?100:50)*0.35);
+  /* 억양 */
+  const fw=words[cur.focus],range=voiced.length?Math.max(...voiced.map(f=>st(f.f0)))-Math.min(...voiced.map(f=>st(f.f0))):0;
+  if(fw&&fw.s!=null){const on=stats(fr,fw.s,fw.s+0.12,ref).mean,endT=voiced[voiced.length-1].t,en=stats(fr,endT-0.15,endT,ref).mean,d=en-on;
+   if(cur.pat==="rise"){inton=clamp(100-Math.max(0,3-d)*18);if(d<1.5)fb.push(`Yes/No 질문이에요 — <b>${fw.word}</b>에서 끝까지 <b>확실히 올려요 ↗</b> (현재 ${d>=0?"+":""}${d.toFixed(1)}반음).`);}
+   else{inton=clamp(100-Math.max(0,3+d)*18);if(d>-1.5)fb.push(`${cur.pat==="list"?"나열의 마지막":"평서문·Wh 질문"}은 <b>${fw.word}</b>에서 <b>확실히 내려요 ↘</b> (현재 ${d>=0?"+":""}${d.toFixed(1)}반음).`);}}
+  if(range<5){inton=inton==null?55:Math.round(inton*0.75);fb.push(`전체 음높이 폭이 ${range.toFixed(1)}반음으로 좁아요 — 한국어식 평탄 억양이에요. 높낮이를 <b>1.5배 과장</b>해 보세요.`);}
+  /* 리듬 */
+  const on=cs.filter(s=>s.det!==false).map(s=>s.s).sort((a,b)=>a-b);let rA=null,rB=null;
+  if(on.length>=3){const iv=on.slice(1).map((t,i)=>t-on[i]),m=iv.reduce((a,b)=>a+b)/iv.length,cv=Math.sqrt(iv.reduce((a,b)=>a+(b-m)**2,0)/iv.length)/m;rA=clamp(100-cv*120);if(cv>0.45)fb.push(`강세 음절 간격이 들쭉날쭉해요. 박자 치듯 <b>${cs.map(s=>words[s.wi].word.toUpperCase()).filter((v,i,a)=>a.indexOf(v)===i).join(" – ")}</b> 일정하게.`);}
+  if(cs.length&&fs.length){const ratio=(fs.reduce((a,s)=>a+s.dur,0)/fs.length)/(cs.reduce((a,s)=>a+s.dur,0)/cs.length);rB=clamp(ratio<=0.65?100:100-(ratio-0.65)*140);if(ratio>0.9)fb.push(`약한 음절이 강한 음절만큼 길어요(길이 비율 ${ratio.toFixed(2)}). 영어는 <b>강세 박자</b> — 기능어는 뭉개듯 짧게.`);}
+  rhythm=rA!=null&&rB!=null?Math.round((rA+rB)/2):Math.round(rA??rB??70);
+ }
+ /* Azure 피드백 */
+ let pa=null;if(nb){pa=nb.PronunciationAssessment;const mis=words.filter(w=>w.err==="Mispronunciation"||(w.acc!=null&&w.acc<60&&w.err!=="Omission")).map(w=>w.word),om=words.filter(w=>w.err==="Omission").map(w=>w.word);
+  if(mis.length)fb.push(`발음 다듬기: <b>${mis.join(", ")}</b> (원어민 듣기 후 따라 읽기).`);if(om.length)fb.push(`빠뜨린 단어: <b>${om.join(", ")}</b>.`);
+  const brk=words.filter(w=>w.pros?.Break?.ErrorTypes?.includes("UnexpectedBreak")).map(w=>w.word);if(brk.length)fb.push(`<b>${brk.join(", ")}</b> 앞에서 불필요하게 끊겼어요 — 의미 덩어리로 이어서.`);
+  if(words.some(w=>w.pros?.Intonation?.ErrorTypes?.includes("Monotone")))fb.push("발음평가에서도 <b>단조로운 억양(Monotone)</b>이 감지됐어요.");}
+ if(!fb.length)fb.push("훌륭해요! 강세·억양·리듬이 모두 자연스러워요. 속도를 조금 올려 읽어보세요.");
+ const loc=[stress,inton,rhythm].filter(x=>x!=null),locAvg=loc.length?loc.reduce((a,b)=>a+b)/loc.length:0;
+ const total=Math.round(pa?pa.PronScore*0.4+locAvg*0.6:locAvg);
+ analysis={fr,words,ref,total};
+ lastReport={student:$("student").value.trim(),sentence:cur.s,total,acc:pa?Math.round(pa.AccuracyScore):"",flu:pa?Math.round(pa.FluencyScore):"",comp:pa?Math.round(pa.CompletenessScore):"",pros:pa?Math.round(pa.ProsodyScore):"",
+  stress:stress??"",inton:inton??"",rhythm:rhythm??"",feedback:fb.map(m=>m.replace(/<[^>]+>/g,"")).join(" / "),words:words.map(w=>w.word+(w.acc!=null?":"+Math.round(w.acc):"")).join(" "),ua:navigator.userAgent.slice(0,40)};
+ sess[idx]={total,url:recURL,report:lastReport};renderProg();
+ $("sendStatus").textContent="";
+ /* 표시 */
+ $("result").style.display="block";$("score").textContent=total;const col=total>=80?"var(--ok)":total>=60?"var(--warn)":"var(--bad)";$("ring").style.background=`conic-gradient(${col} ${total}%,rgba(255,255,255,.08) 0)`;
+ const set=(k,v)=>{$("s-"+k).textContent=v==null?"–":Math.round(v);$("b-"+k).style.width=(v==null?0:v)+"%";};
+ set("acc",pa?.AccuracyScore);set("flu",pa?.FluencyScore);set("comp",pa?.CompletenessScore);set("pros",pa?.ProsodyScore);set("str",stress);set("int",inton);set("rhy",rhythm);
+ $("rmode").textContent=pa?"Azure 발음평가 + 운율 분석":"운율 분석만 (발음평가 미연결)"+note;
+ $("words").innerHTML=words.map((wd,wi)=>{const cls=wd.err==="Omission"?"om":wd.acc==null?"":wd.acc>=80?"ok":wd.acc>=60?"mid":"bad";
+  const s=wd.syl.length>1?wd.syl.map(sy=>{let t=sy.txt;if(sy.det)t=`<em>${t.toUpperCase()}</em>`;if(sy.expected&&W[wi][2]>1)t=`<u>${t}</u>`;return t;}).join("·"):(wd.acc!=null?"정확도 "+Math.round(wd.acc):W[wi][1]?"내용어":"기능어");
+  return `<div class="w ${cls}">${wd.word}<span class="s">${s}</span></div>`;}).join("");
+ hist.push(total);const adv=hist.advice();if(adv)fb.push(adv);$("fb").innerHTML=fb.map(m=>`<p>• ${m}</p>`).join("");
+ $("status").textContent=`종합 ${total}점 — 파형에서 금색 블록(내 강세)과 밑줄(정답 강세)을 비교해 보세요.`;draw();
+}
+
+/* ===== 그리기 ===== */
+function draw(){const W=cv.getBoundingClientRect().width,H=300,L=30,R=10,T=14,B=86;g.clearRect(0,0,W,H);g.fillStyle="#0F1E3C";g.fillRect(0,0,W,H);
+ const yOf=s=>T+(1-(s+9)/18)*(H-T-B);g.font="11px 'Noto Sans KR',sans-serif";g.fillStyle="#7f8db0";g.textAlign="right";
+ [["높",6],["중",0],["낮",-6]].forEach(([l,s])=>{const y=yOf(s);g.setLineDash([4,4]);g.strokeStyle="rgba(255,255,255,.12)";g.beginPath();g.moveTo(L,y);g.lineTo(W-R,y);g.stroke();g.setLineDash([]);g.fillText(l,L-6,y+4);});
+ let fr,ref,ts,te;
+ if(analysis){fr=analysis.fr;ref=analysis.ref;const ws=analysis.words.filter(w=>w.s!=null);ts=Math.max(0,(ws[0]?.s??0)-0.15);te=(ws[ws.length-1]?.e??fr[fr.length-1].t)+0.15;}
+ else{fr=liveFr;const vo=fr.filter(f=>f.f0>0);ref=vo.length?median(vo.map(f=>st(f.f0))):st(150);te=running?Math.max(3,(performance.now()-t0)/1000):3;ts=te-3;}
+ const xOf=t=>L+(t-ts)/(te-ts)*(W-L-R);
+ /* 목표 억양 */
+ g.lineWidth=5;g.lineCap="round";g.lineJoin="round";g.strokeStyle="#C9A227";g.globalAlpha=analysis?.85:.6;
+ if(analysis){const ws=analysis.words;const f=ws[cur.focus];if(f&&f.s!=null){g.beginPath();let first=true;
+   ws.forEach((wd,i)=>{if(wd.s==null||i>=cur.focus)return;const y=yOf(cur.w[i][1]?1.5:0.2);const x1=xOf(wd.s),x2=xOf(wd.e);first?g.moveTo(x1,y):g.lineTo(x1,y);g.lineTo(x2,y);first=false;});
+   const lastE=ws.filter(w=>w.e!=null).slice(-1)[0].e;const xs=xOf(f.s),xe=xOf(lastE);
+   if(cur.pat==="rise"){first?g.moveTo(xs,yOf(-1.5)):g.lineTo(xs,yOf(-1.5));g.quadraticCurveTo(xs+(xe-xs)*0.6,yOf(-1),xe,yOf(5));}
+   else{first?g.moveTo(xs,yOf(4)):g.lineTo(xs,yOf(4));g.quadraticCurveTo(xs+(xe-xs)*0.4,yOf(2.5),xe,yOf(-4.5));}g.stroke();}}
+ else{const n=cur.w.length,x0=L+(W-L-R)*0.08,x1=W-R-(W-L-R)*0.08,fx=x0+(x1-x0)*cur.focus/n;g.beginPath();g.moveTo(x0,yOf(1));g.lineTo(fx,yOf(0.5));
+  if(cur.pat==="rise"){g.lineTo(fx,yOf(-1.5));g.quadraticCurveTo(fx+(x1-fx)*0.6,yOf(-1),x1,yOf(5));}else{g.lineTo(fx,yOf(4));g.quadraticCurveTo(fx+(x1-fx)*0.4,yOf(2.5),x1,yOf(-4.5));}g.stroke();}
+ g.globalAlpha=1;
+ /* 내 피치 */
+ g.strokeStyle="#4FD1FF";g.lineWidth=3.5;g.beginPath();let pen=false;for(const f of fr){if(f.t<ts||f.t>te)continue;if(f.f0>0){const x=xOf(f.t),y=yOf(clamp(st(f.f0)-ref,-9,9));pen?g.lineTo(x,y):g.moveTo(x,y);pen=true;}else pen=false;}g.stroke();
+ /* 하단: 단어·음절 블록 */
+ if(analysis){const y0=H-B+12,hmax=46;analysis.words.forEach((wd,wi)=>{if(!wd.syl.length){return;}
+   wd.syl.forEach(sy=>{const x=xOf(sy.s),w=Math.max(3,xOf(sy.e)-x-2),h=sy.db!=null?clamp((sy.db+45)/35,0.15,1)*hmax:hmax*0.5;
+    g.fillStyle=sy.det?"rgba(201,162,39,.85)":"rgba(79,209,255,.35)";g.fillRect(x,y0+hmax-h,w,h);
+    if(sy.expected&&cur.w[wi][2]>1){g.fillStyle="#4FD1FF";g.fillRect(x,y0+hmax+3,w,3);}});
+   g.fillStyle=wd.err==="Omission"?"#777":"#F4F1E8";g.font="bold 12px 'Noto Sans KR',sans-serif";g.textAlign="center";g.fillText(wd.word,xOf((wd.s+wd.e)/2),H-8);
+   g.strokeStyle="rgba(255,255,255,.12)";g.lineWidth=1;g.beginPath();g.moveTo(xOf(wd.s),T);g.lineTo(xOf(wd.s),H-B+8);g.stroke();});}
+ else{g.fillStyle="#7f8db0";g.font="12px 'Noto Sans KR',sans-serif";g.textAlign="center";g.fillText(running?"● 녹음 중…":"녹음하면 단어별 강세 블록이 여기에 표시됩니다",W/2,H-30);}
+ if(running){g.fillStyle="#D64545";g.beginPath();g.arc(W-18,T+6,5,0,7);g.fill();}}
+setItem(0);fit();checkMode();
+</script>
+</body>
+</html>
