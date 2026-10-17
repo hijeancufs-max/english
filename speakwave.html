@@ -60,14 +60,14 @@ details summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:13px}
 
 <div class="card">
   <div class="label"><span>오늘의 문장 <span id="todayN" style="color:var(--muted)"></span></span><span><span class="mode" id="quota" style="margin-right:4px"></span><span class="mode" id="mode">발음평가 연결 확인 중…</span></span></div>
-  <div class="field" style="margin:0 0 10px"><input id="student" placeholder="학생 이름 (결과 전송용)" style="padding:8px 10px;font-size:14px"></div>
+  <div class="row" style="margin:0 0 12px"><button class="b-gold" id="start" style="flex:2">▶ 오늘 3문장 연습 시작 (듣기→녹음→피드백)</button></div>
   <div class="sent" id="sent"></div>
   <div class="ko" id="ko"></div>
+  <div class="row" style="margin-top:10px"><button class="b-ghost" id="listen" style="font-size:17px;padding:16px 10px">🔊 듣기</button><button class="b-rec" id="rec" style="font-size:17px;padding:16px 10px">🎤 녹음</button></div>
+  <div class="status" id="status">① 🔊 듣기 → ② 🎤 녹음 → 말이 끝나면 자동으로 점수가 나와요.</div>
   <div class="chips" id="chips"></div>
-  <div class="row"><button class="b-gold" id="start" style="flex:2">▶ 오늘 3문장 연습 시작 (듣기→녹음→피드백)</button></div>
-  <div class="row"><button class="b-ghost" id="listen">🔊 원어민 듣기</button><button class="b-rec" id="rec">🎤 녹음</button></div>
-  <div class="status" id="status">녹음 버튼을 누르고 문장을 읽으세요. 말이 끝나면 자동으로 멈춥니다.</div>
   <div class="prog" id="prog"></div>
+  <div class="field" style="margin-top:12px"><input id="student" placeholder="학생 이름 (결과 전송용)" style="padding:8px 10px;font-size:14px"></div>
 </div>
 
 <div class="card">
