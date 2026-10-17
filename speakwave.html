@@ -51,6 +51,11 @@ details summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:13px}
 </style>
 </head>
 <body>
+<div id="inapp" style="display:none;background:#D64545;color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:14px;line-height:1.5">
+  <b>⚠️ 카카오톡/인앱 브라우저에서는 마이크가 안 돼요.</b><br>
+  <button id="openChrome" class="b-gold" style="margin-top:8px;width:100%">Chrome으로 열기</button>
+  <div style="font-size:12px;margin-top:6px;opacity:.9">버튼이 안 되면: 오른쪽 위/아래 <b>⋮ 메뉴 → "다른 브라우저로 열기"</b> (아이폰: 공유 아이콘 → Safari로 열기)</div>
+</div>
 <header><h1>Speak<span>Wave</span></h1><small>영어 발음 · 강세 · 억양 · 리듬 실시간 코치 — JINNY ENGLISH</small></header>
 
 <div class="card">
@@ -420,6 +425,9 @@ function draw(){const W=cv.getBoundingClientRect().width,H=300,L=30,R=10,T=14,B=
    g.strokeStyle="rgba(255,255,255,.12)";g.lineWidth=1;g.beginPath();g.moveTo(xOf(wd.s),T);g.lineTo(xOf(wd.s),H-B+8);g.stroke();});}
  else{g.fillStyle="#7f8db0";g.font="12px 'Noto Sans KR',sans-serif";g.textAlign="center";g.fillText(running?"● 녹음 중…":"녹음하면 단어별 강세 블록이 여기에 표시됩니다",W/2,H-30);}
  if(running){g.fillStyle="#D64545";g.beginPath();g.arc(W-18,T+6,5,0,7);g.fill();}}
+(function(){const ua=navigator.userAgent;const inapp=/KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(ua);if(!inapp)return;$("inapp").style.display="block";
+ $("openChrome").onclick=()=>{const u=location.href.replace(/^https?:\/\//,"");if(/android/i.test(ua))location.href="intent://"+u+"#Intent;scheme=https;package=com.android.chrome;end";
+  else{navigator.clipboard&&navigator.clipboard.writeText(location.href);alert("주소를 복사했어요. Safari나 Chrome을 열고 주소창에 붙여넣기 하세요.");}};})();
 setItem(0);fit();checkMode();
 </script>
 </body>
