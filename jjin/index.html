@@ -112,7 +112,7 @@ footer{padding:40px 0 60px;color:var(--muted);font-size:14px;display:flex;justif
 <body>
 <nav><div class="wrap">
  <a class="logo" href="#"><i>J</i>Jjin <b>영어</b></a>
- <div class="links"><a href="#latest">최신 영상</a><a href="#episodes">에피소드</a><a href="#how">이렇게 배워요</a><a href="#class">공부방</a></div>
+ <div class="links"><a href="#latest">최신 영상</a><a href="#episodes">에피소드</a><a href="#how">이렇게 배워요</a><a href="#class">LAB</a></div>
  <a class="btn sm" id="subTop" href="#" target="_blank" rel="noopener">▶ 구독하기</a>
 </div></nav>
 
@@ -168,12 +168,12 @@ footer{padding:40px 0 60px;color:var(--muted);font-size:14px;display:flex;justif
 
 <section id="class"><div class="wrap">
  <div class="band reveal">
-  <div><b>JINNY ENGLISH 공부방</b><small>초등 영어 · 소수 정예 · AI로 만든 교재와 게임으로 수업합니다</small></div>
-  <a class="btn" href="mailto:hijeancufs@gmail.com" id="classBtn">수업 문의하기</a>
+  <div><b>JINNY ENGLISH LAB</b><small>대학 영어 전문가가 원어민 교수의 검수를 받아 제작합니다. 현대 한국어를 영어로 변환해 봅니다.</small></div>
+  <a class="btn" id="subBand" href="#" target="_blank" rel="noopener">▶ 유튜브에서 구독하기</a>
  </div>
 </div></section>
 
-<footer class="wrap"><span>© 2026 Jjin 영어 · 김희진 (JINNY ENGLISH)</span><span style="display:flex;gap:16px"><a href="https://www.youtube.com/@jjinenglish" target="_blank" rel="noopener">YouTube @jjinenglish</a><a href="mailto:hijeancufs@gmail.com">문의 메일</a></span></footer>
+<footer class="wrap"><span>© 2026 Jjin 영어 · JINNY ENGLISH LAB · 김희진</span><span style="display:flex;gap:16px"><a href="https://www.youtube.com/@jjinenglish" target="_blank" rel="noopener">YouTube @jjinenglish</a><a href="mailto:hijeancufs@gmail.com">문의 메일</a></span></footer>
 
 <script>
 const CONFIG={CHANNEL_ID:"UCQ0hnrBccK0alLzdt3n0bBw",HANDLE:"@jjinenglish",CLASS_LINK:"",
@@ -181,8 +181,7 @@ const CONFIG={CHANNEL_ID:"UCQ0hnrBccK0alLzdt3n0bBw",HANDLE:"@jjinenglish",CLASS_
   {no:"EP02",word:"갑분싸",wrong:"",ex:[]},{no:"EP03",word:"찐",wrong:"",ex:[]}]};
 (function(){
  const id=CONFIG.CHANNEL_ID,ch="https://www.youtube.com/channel/"+id+"?sub_confirmation=1";
- ["subTop","subHero"].forEach(k=>document.getElementById(k).href=ch);
- if(CONFIG.CLASS_LINK)document.getElementById("classBtn").href=CONFIG.CLASS_LINK;
+ ["subTop","subHero","subBand"].forEach(k=>document.getElementById(k).href=ch);
  document.getElementById("player").innerHTML='<iframe src="https://www.youtube.com/embed/videoseries?list=UU'+id.slice(2)+'&rel=0" title="Jjin 영어 최신 영상" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
  const el=document.getElementById("eps");
  CONFIG.EPISODES.forEach(e=>{const d=document.createElement("div");d.className="ep reveal"+(e.ex.length?"":" soon");
